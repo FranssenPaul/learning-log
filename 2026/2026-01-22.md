@@ -1,0 +1,120 @@
+# IT Vocabulary: Essential Verbs
+
+## 2026-01-22 - Technical English: grab, grep, break down
+
+### 1. To Grab
+
+**Meaning**: To retrieve, fetch, or obtain something quickly (usually data or a reference)
+
+**Context**: Used when accessing DOM elements, API responses, or any piece of data you need
+
+**Examples**:
+```javascript
+// Grab an element from the DOM
+const fileList = document.getElementById('file-list');
+
+// Grab a value from an object
+const username = user.name;
+
+// Grab data from an API
+const data = await fetch('/api/users').then(r => r.json());
+```
+
+**French equivalent**: "récupérer", "attraper", "obtenir"
+
+**Common phrases**:
+- "Grab the container element"
+- "Let's grab that value from the database"
+- "First, we need to grab the user's input"
+
+---
+
+### 2. To Grep
+
+**Meaning**: To search for patterns in text (comes from the Unix command `grep` - Global Regular Expression Print)
+
+**Context**: Used when searching through files, logs, or text data using patterns or keywords
+
+**Examples**:
+```bash
+# Search for "error" in log files
+grep "error" server.log
+
+# Search for a function name in all JavaScript files
+grep -r "myFunction" src/
+
+# Case-insensitive search
+grep -i "TODO" *.js
+```
+
+**French equivalent**: "rechercher", "filtrer", "chercher un motif"
+
+**Common phrases**:
+- "Grep through the logs to find the error"
+- "I grepped for that variable name in the codebase"
+- "Can you grep the config file for that setting?"
+
+**Note**: Also used as a general verb for searching, even outside the terminal
+
+---
+
+### 3. To Break Down
+
+**Meaning**: To decompose something complex into simpler parts; to explain step-by-step
+
+**Context**: Used when explaining code, analyzing problems, or simplifying complex concepts
+
+**Examples**:
+
+**In explanations**:
+```
+"Let me break down how this function works:
+1. First, it fetches the data
+2. Then, it transforms the response
+3. Finally, it updates the UI"
+```
+
+**In problem-solving**:
+```
+"Let's break down this bug:
+- What's the expected behavior?
+- What's actually happening?
+- Where does the code fail?"
+```
+
+**In code architecture**:
+```javascript
+// Breaking down a complex function into smaller ones
+function processUserData(user) {
+  const validated = validateUser(user);
+  const transformed = transformData(validated);
+  const saved = saveToDatabase(transformed);
+  return saved;
+}
+```
+
+**French equivalent**: "décomposer", "détailler", "expliquer étape par étape"
+
+**Common phrases**:
+- "Can you break down this algorithm for me?"
+- "Let's break this problem down into smaller pieces"
+- "I'll break down each part of the code"
+
+---
+
+## Usage Summary
+
+| Verb | Quick Definition | Typical Usage |
+|------|-----------------|---------------|
+| **grab** | Get/retrieve data quickly | DOM manipulation, data access |
+| **grep** | Search for text patterns | Searching files, logs, code |
+| **break down** | Explain/decompose | Teaching, debugging, planning |
+
+---
+
+## Practice Sentences
+
+1. "First, **grab** the input value, then **grep** through the database to find matching records."
+2. "Let me **break down** how this API works before we implement it."
+3. "I **grepped** the error logs and found the issue."
+4. "**Grab** that configuration object and **break down** its structure for the team."
