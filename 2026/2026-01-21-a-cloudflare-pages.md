@@ -96,12 +96,12 @@ User visits https://learning-log.pages.dev
     ↓
 Cloudflare serves public/index.html (file list)
     ↓
-User clicks on "2026-01-16.md"
+User clicks on "2026-01-16-a-networking.md"
     ↓
-Request: /api/render?file=2026/2026-01-16.md
+Request: /api/render?file=2026/2026-01-16-a-networking.md
     ↓
 Worker (functions/api/render.js) executes:
-  1. Fetches https://raw.githubusercontent.com/.../2026-01-16.md
+  1. Fetches https://raw.githubusercontent.com/.../2026-01-16-a-networking.md
   2. Converts Markdown → HTML (using marked library)
   3. Wraps in styled HTML template (Tailwind)
   4. Returns complete page
