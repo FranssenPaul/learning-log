@@ -1,0 +1,9 @@
+# Local Codex state
+.codex
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
