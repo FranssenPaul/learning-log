@@ -1,226 +1,423 @@
-# Learning Log — esbuild & Vite
+# Learning Log — Comprendre esbuild, Vite et Rollup simplement
 
 **Date :** 2026-04-03
-**Tags :** `tooling` `bundler` `build` `javascript` `vite` `esbuild`
-**Statut :** première lecture — concepts fondamentaux
+**Tags :** `tooling` `build` `javascript` `vite` `esbuild` `rollup`
+**Statut :** note de compréhension — version simplifiée
 
 ---
 
-## 1. Le problème de départ — pourquoi des outils de build ?
+## 1. Le point de départ
 
-Quand tu écris du JavaScript moderne, tu utilises :
-- des **modules** (`import/export`)
-- du **TypeScript**
-- du **JSX** (React)
-- des bibliothèques tierces (`node_modules`)
-- du CSS avancé (SCSS, CSS Modules…)
+Quand on débute avec le développement web moderne, on rencontre très vite des noms comme :
 
-**Les navigateurs ne comprennent pas tout ça directement.**
+- `esbuild`
+- `Vite`
+- `Rollup`
+- `Webpack`
+- `Babel`
 
-Il faut donc *transformer* et *assembler* le code avant de le livrer. C'est le travail d'un **bundler** (outil de mise en paquets).
+Au début, cela peut donner l’impression qu’il faut comprendre toute une usine avant même d’écrire une page web.
 
-> **Analogie — le restaurant :** Ton code source, c'est la cuisine avec les ingrédients bruts (modules séparés, TypeScript, JSX). Le navigateur, c'est le client à table. Le bundler, c'est le cuisinier qui transforme, assemble et présente le plat fini.
+En réalité, l’idée de fond est assez simple :
 
----
+> tu écris du code source pour travailler confortablement, puis des outils le préparent pour qu’il soit facile à utiliser dans le navigateur.
 
-## 2. esbuild — le moteur de course
+Autrement dit :
 
-### Ce que c'est
-
-**esbuild** est un **bundler et transpileur JavaScript/TypeScript**, écrit en **Go** (pas en JavaScript).
-
-Il fait deux choses fondamentales :
-1. **Transpiler** — convertir TypeScript, JSX, syntaxe ES moderne → JavaScript que les navigateurs comprennent
-2. **Bundler** — prendre des dizaines/centaines de fichiers séparés et les assembler en un seul (ou quelques) fichier(s)
-
-### Pourquoi Go ? La clé de sa vitesse
-
-La plupart des outils de build JS (Webpack, Rollup, Babel…) sont eux-mêmes écrits en JavaScript, et tournent dans Node.js. C'est un peu comme demander à un traducteur de se traduire lui-même.
-
-Go est un langage compilé, avec une gestion native du **parallélisme**. esbuild peut exploiter tous les cœurs de ton CPU simultanément.
-
-> **Analogie — la scierie :** Webpack, c'est un menuisier habile qui coupe les planches une par une, à la main. esbuild, c'est une scierie industrielle avec dix lames en parallèle. Le résultat est le même — des planches prêtes à l'emploi — mais la vitesse est sans comparaison. On parle de **10x à 100x plus rapide** que les bundlers traditionnels.
-
-### Ce qu'esbuild fait (et ne fait pas)
-
-| ✅ Fait | ❌ Ne fait pas (ou peu) |
-|---|---|
-| Transpiler TS/JSX | Hot Module Replacement (HMR) dev avancé |
-| Bundler ES Modules | Optimisations CSS complexes |
-| Tree-shaking | Plugins riches (ecosystème limité) |
-| Minification | Analyse fine du bundle (visualiseur) |
-| Source maps | |
-
-esbuild est **un moteur**, pas un véhicule complet. C'est une pièce d'infrastructure, pas un outil clé-en-main pour le développement quotidien.
-
-### Usage direct (CLI)
-
-```bash
-# Transpiler un fichier
-esbuild src/index.tsx --bundle --outfile=dist/bundle.js
-
-# Avec options courantes
-esbuild src/index.tsx \
-  --bundle \
-  --minify \
-  --sourcemap \
-  --target=es2020 \
-  --outfile=dist/bundle.js
-```
-
-### Usage en Node.js (API)
-
-```javascript
-import * as esbuild from 'esbuild'
-
-await esbuild.build({
-  entryPoints: ['src/index.tsx'],
-  bundle: true,
-  minify: true,
-  outfile: 'dist/bundle.js',
-})
-```
+- toi, tu écris dans une forme pratique pour développer
+- les outils transforment cela dans une forme pratique pour exécuter
 
 ---
 
-## 3. Vite — l'atelier complet du développeur moderne
+## 2. Pourquoi a-t-on besoin de ces outils ?
 
-### Ce que c'est
+Quand on construit une application web, on ne travaille pas toujours avec un seul fichier JavaScript.
 
-**Vite** (prononcé "veet", *vite* en français) est un **outil de développement frontend complet**, créé par Evan You (le créateur de Vue.js).
+On utilise souvent :
 
-Vite n'est **pas** un bundler. C'est un **dev server + build tool** qui :
-- gère le serveur de développement avec HMR ultra-rapide
-- orchestre la production via Rollup (+ bientôt via Rolldown)
-- fournit une configuration prête à l'emploi (React, Vue, TypeScript…)
+- plusieurs fichiers séparés
+- des `import` et `export`
+- du TypeScript
+- parfois du JSX
+- des dépendances installées avec `npm`
+- des fichiers CSS, images, polices, etc.
 
-> **Analogie — l'atelier de menuiserie :** esbuild est la scie à ruban — un outil précis et puissant. Vite, c'est l'atelier complet : la scie (esbuild en sous-main), l'établi, le rangement, l'éclairage, et un assistant qui range les copeaux pendant que tu travailles.
+Le navigateur moderne comprend déjà beaucoup de choses, mais il ne suffit pas toujours de lui envoyer le projet brut tel quel.
 
-### L'insight fondamental de Vite : deux modes distincts
+Il faut souvent :
 
-Vite a compris que **développement** et **production** sont deux problèmes différents :
+- transformer certains fichiers
+- organiser les dépendances
+- préparer les fichiers pour la production
+- réduire le poids final
 
-#### Mode développement — les ES Modules natifs
+On peut résumer cela ainsi :
 
-En dev, le navigateur moderne comprend les `import` nativement (ES Modules). Vite **n'assemble rien**. Il sert les fichiers *tels quels*, en transformant uniquement ce qui en a besoin (TS → JS, JSX → JS) à la demande, via esbuild.
-
-Résultat : le serveur démarre **instantanément**, quel que soit la taille du projet.
-
-> **Analogie — le restaurant encore :** En dev, Vite ne cuisine pas tout le menu à l'avance. Il prépare chaque plat *à la commande*, au moment où le navigateur demande le fichier. Pas de mise en place longue, service immédiat.
-
-#### Mode production — Rollup (bundler mature)
-
-Pour la production, il faut assembler, optimiser, minifier. Vite utilise **Rollup**, un bundler mature avec un excellent tree-shaking et un écosystème de plugins riche.
-
-> ⚠️ **Pourquoi pas esbuild en production ?** esbuild est moins mature pour certaines optimisations avancées (code splitting complexe, CSS modules…). Vite préfère la robustesse de Rollup pour le build final. *Note : Rolldown (un Rollup réécrit en Rust) est en cours de développement et deviendra le futur moteur de Vite.*
-
-### Architecture interne de Vite
-
-```
-┌─────────────────────────────────────────┐
-│                  VITE                   │
-│                                         │
-│  ┌──────────────┐  ┌─────────────────┐  │
-│  │  Dev Server  │  │  Build (prod)   │  │
-│  │              │  │                 │  │
-│  │  esbuild     │  │  Rollup         │  │
-│  │  (transform) │  │  (bundle+opt)   │  │
-│  │              │  │                 │  │
-│  │  HMR natif   │  │  Tree-shaking   │  │
-│  └──────────────┘  └─────────────────┘  │
-│                                         │
-│  Plugin API unifiée (Rollup-compatible) │
-└─────────────────────────────────────────┘
-```
-
-### Démarrer avec Vite
-
-```bash
-npm create vite@latest mon-projet -- --template react-ts
-cd mon-projet
-npm install
-npm run dev    # serveur dev instantané
-npm run build  # build production via Rollup
-```
-
-### Configuration (vite.config.ts)
-
-```typescript
-import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
-
-export default defineConfig({
-  plugins: [react()],
-  server: {
-    port: 3000,
-  },
-  build: {
-    outDir: 'dist',
-    sourcemap: true,
-  },
-})
-```
+- **écrire le projet** est une chose
+- **préparer le projet pour le navigateur** en est une autre
 
 ---
 
-## 4. Comparaison directe — esbuild vs Vite
+## 3. L’idée de “build”
 
-| Critère | esbuild | Vite |
-|---|---|---|
-| **Nature** | Bundler/transpileur bas niveau | Outil de dev complet |
-| **Langage** | Go | JavaScript (Node.js) |
-| **Vitesse** | Extrêmement rapide | Très rapide (grâce à esbuild en dev) |
-| **Dev server** | Non (à construire soi-même) | Oui, avec HMR |
-| **HMR** | Non | Oui, natif |
-| **Config** | Minimale, API simple | Configuration riche |
-| **Plugins** | Écosystème limité | Riche (compatible Rollup) |
-| **Cas d'usage** | Build scripts, CLI tools, libs | Applications web (SPA, SSR…) |
-| **Courbe d'apprentissage** | Faible | Modérée |
+Le mot **build** désigne simplement la préparation du projet avant sa version finale.
 
-> **Analogie finale — moteur vs voiture :** esbuild est un moteur de voiture de course — puissant, nu, à intégrer soi-même dans un châssis. Vite est une voiture complète qui *utilise* un moteur rapide (esbuild) pour le quotidien, et un moteur plus sophistiqué (Rollup) pour la course officielle (production).
+Faire un build, c’est par exemple :
 
----
+- prendre les fichiers source
+- les transformer si besoin
+- regrouper ce qui doit l’être
+- produire un dossier final prêt à être servi
 
-## 5. Quand choisir quoi ?
+On peut imaginer ceci :
 
-### Choisir esbuild directement si :
-- tu construis un **outil CLI** ou un **script de build custom**
-- tu veux intégrer un bundler dans ta propre infrastructure
-- tu construis une **bibliothèque** (pas une app avec UI)
-- tu as besoin d'un contrôle total et minimal
+- `src/` = ce que tu écris
+- `dist/` = ce que l’outil prépare pour la version finale
 
-### Choisir Vite si :
-- tu développes une **application web** (React, Vue, Svelte…)
-- tu veux un **DX (Developer Experience) optimal** out-of-the-box
-- tu as besoin de HMR, de gestion des assets, de plugins
-- → **C'est le choix par défaut pour 95% des projets web modernes**
+Le build n’est donc pas “de la magie compliquée”.
+C’est surtout une étape de préparation.
 
 ---
 
-## 6. Connexions avec mes projets
+## 4. esbuild, expliqué simplement
 
-### Think.Play
-Le frontend React de Think.Play *devrait* être bootstrappé avec Vite (si ce n'est pas déjà le cas). Le HMR en développement est précieux quand on teste les composants WebSocket et quiz en temps réel.
+### Ce que c’est
 
-### paul.craft()
-Pour les visualisations mathématiques (JSXGraph, p5.js…), Vite gère parfaitement les imports de bibliothèques tierces et la production de bundles optimisés.
+**esbuild** est un outil très rapide qui sert à **transformer** et parfois **assembler** ton code JavaScript ou TypeScript.
 
-### POSEN
-Le frontend React du POS bénéficierait de Vite pour le dev, avec un build Rollup optimisé pour la distribution offline-first.
+Son rôle principal est :
+
+- lire tes fichiers source
+- les convertir si nécessaire
+- produire des fichiers directement utilisables
+
+Par exemple, il peut :
+
+- transformer du TypeScript en JavaScript
+- transformer du JSX en JavaScript
+- regrouper plusieurs modules
+- minifier le résultat final
+
+### Pourquoi on en parle autant ?
+
+Parce qu’il est connu pour sa **vitesse**.
+
+L’idée importante ici n’est pas de retenir dans quel langage il est écrit en interne, mais de comprendre ceci :
+
+> esbuild est surtout apprécié parce qu’il fait très vite un travail de transformation que d’autres outils faisaient plus lentement.
+
+### Comment le voir mentalement ?
+
+Tu peux voir esbuild comme :
+
+- un **moteur très rapide**
+- un **outil de transformation**
+- une **brique technique**
+
+Ce n’est pas forcément l’outil complet que l’on utilise directement tous les jours pour toute l’expérience de développement.
 
 ---
 
-## 7. À explorer ensuite
+## 5. Vite, expliqué simplement
 
-- [ ] **Rollup** — comprendre le bundler de production derrière Vite
-- [ ] **Rolldown** — le futur de Vite (réécrit en Rust)
-- [ ] **Vite + FastAPI** — intégration du build Vite avec un backend Python
-- [ ] **vite-plugin-pwa** — pour l'offline-first dans POSEN
-- [ ] **vitest** — framework de test qui réutilise la config Vite
+### Ce que c’est
+
+**Vite** est un outil pensé pour rendre le développement frontend plus simple et plus fluide.
+
+Il aide surtout à deux moments :
+
+- **pendant le développement**
+- **au moment de produire la version finale**
+
+Autrement dit, Vite ne sert pas seulement à transformer du code.
+Il sert aussi à rendre le travail quotidien plus confortable.
+
+### Pourquoi Vite plaît autant ?
+
+Parce qu’il donne une sensation de légèreté :
+
+- le projet démarre vite
+- les changements apparaissent vite
+- la configuration reste souvent raisonnable
+
+### Comment le voir mentalement ?
+
+Tu peux voir Vite comme :
+
+- un **atelier de travail**
+- un **organisateur**
+- un **outil de développement complet**
+
+Là où esbuild ressemble plutôt à un moteur spécialisé, Vite ressemble davantage à un environnement de travail prêt à l’emploi.
+
+---
+
+## 6. La différence essentielle entre esbuild et Vite
+
+Si on simplifie beaucoup :
+
+- **esbuild** transforme très vite du code
+- **Vite** s’appuie sur des outils comme esbuild pour offrir une bonne expérience de développement
+
+Donc :
+
+- esbuild est plutôt une **brique**
+- Vite est plutôt un **outil complet**
+
+Une manière simple de s’en souvenir :
+
+> esbuild aide à faire le travail technique rapidement  
+> Vite aide le développeur à travailler confortablement
+
+---
+
+## 7. Pourquoi on dit souvent que Vite utilise esbuild
+
+Cette phrase peut être un peu trompeuse si on ne précise pas le contexte.
+
+Il faut la comprendre de manière simple :
+
+- Vite utilise `esbuild` pour certaines transformations rapides
+- cela aide beaucoup pendant le développement
+- ce n’est pas forcément toute l’histoire du build final
+
+L’idée importante n’est donc pas de mémoriser l’architecture interne exacte dès le début, mais de comprendre ceci :
+
+> Vite s’appuie sur la rapidité de esbuild pour rendre le développement agréable.
+
+---
+
+## 8. Et Rollup alors ?
+
+### Ce que c’est
+
+**Rollup** est un autre outil de build.
+
+Son rôle est de prendre plusieurs fichiers et dépendances, puis de construire un résultat final propre pour la production.
+
+### Pourquoi Vite en parle ?
+
+Parce que, dans sa logique classique :
+
+- Vite est très orienté confort et rapidité en développement
+- Rollup est utilisé pour le build de production
+
+Donc, si on simplifie :
+
+- **esbuild** aide beaucoup pour aller vite
+- **Rollup** aide à produire une version finale bien préparée
+
+### Comment comprendre Rollup simplement ?
+
+Tu peux voir Rollup comme un **assembleur de version finale**.
+
+Son travail est de :
+
+- rassembler ce qu’il faut
+- organiser les fichiers de sortie
+- optimiser le résultat de production
+
+Il est moins utile à retenir comme “nom technique à connaître absolument” que comme idée :
+
+> pour la production, on veut un résultat final propre, cohérent et optimisé.
+
+Et Rollup est l’outil historiquement utilisé par Vite pour cela.
+
+---
+
+## 9. Une image simple pour retenir les trois
+
+Si on prend l’analogie d’un atelier :
+
+- **esbuild** = un outil très rapide qui coupe et prépare les pièces
+- **Rollup** = l’outil qui assemble soigneusement le produit final
+- **Vite** = l’atelier bien organisé qui te permet de travailler facilement du début à la fin
+
+Ou encore :
+
+- esbuild = la vitesse
+- Rollup = l’assemblage final
+- Vite = l’expérience globale de travail
+
+---
+
+## 10. Développement et production : pourquoi ce n’est pas la même chose ?
+
+C’est une idée très importante.
+
+Quand tu développes, tu veux surtout :
+
+- voir rapidement tes changements
+- corriger sans attendre
+- garder un cycle de travail fluide
+
+Quand tu mets en production, tu veux surtout :
+
+- des fichiers propres
+- un résultat stable
+- un code plus léger
+- une sortie prête à être déployée
+
+Donc les besoins ne sont pas exactement les mêmes.
+
+C’est pour cela qu’un outil comme Vite peut utiliser une logique très rapide en développement, puis une logique plus orientée build final en production.
+
+---
+
+## 11. Un exemple très simple
+
+Imaginons un mini-projet web avec :
+
+- `index.html`
+- `src/main.ts`
+- `src/message.ts`
+- `src/style.css`
+
+Pendant que tu développes :
+
+- tu modifies `main.ts`
+- tu enregistres
+- Vite met à jour très vite ce qu’il faut
+
+Au moment du build :
+
+- l’outil prépare une version finale
+- il produit par exemple un dossier `dist/`
+- ce dossier contient ce qui sera réellement servi en production
+
+L’idée à retenir n’est pas le détail technique de chaque étape.
+L’idée à retenir est :
+
+- **en développement**, on cherche la fluidité
+- **en production**, on cherche une sortie propre
+
+---
+
+## 12. Quand parler directement de esbuild ?
+
+Il est utile de connaître `esbuild` si tu veux comprendre qu’il existe des outils très spécialisés dans la transformation rapide du code.
+
+Mais, dans la pratique d’un projet frontend classique, tu peux très bien raisonner ainsi :
+
+- j’utilise **Vite** pour travailler
+- Vite s’occupe d’utiliser les bons outils en interne
+
+Autrement dit, tu n’as pas forcément besoin de manipuler esbuild directement pour profiter de ses avantages.
+
+---
+
+## 13. Quand Vite est un bon choix
+
+Vite est souvent un bon choix quand tu veux :
+
+- créer une application frontend moderne
+- travailler avec une boucle de développement rapide
+- garder une configuration assez simple
+- avoir un outil déjà bien adopté
+
+Pour un apprentissage progressif, Vite est intéressant parce qu’il permet de travailler sans devoir comprendre dès le premier jour tous les détails internes du build.
+
+---
+
+## 14. Ce qu’il faut retenir absolument
+
+### Idée 1
+Le **build** est la préparation du projet pour sa version finale.
+
+### Idée 2
+**esbuild** est surtout un outil de transformation rapide.
+
+### Idée 3
+**Vite** est un outil de développement plus global, pensé pour rendre le travail confortable.
+
+### Idée 4
+**Rollup** est l’outil historiquement utilisé par Vite pour construire la version de production.
+
+### Idée 5
+Le développement et la production n’ont pas exactement les mêmes besoins.
+
+### Idée 6
+Il n’est pas nécessaire de tout comprendre en profondeur tout de suite pour utiliser Vite intelligemment.
+
+---
+
+## 15. À explorer ensuite
+
+- [ ] **Le mot “bundler”**
+  Comprendre ce mot simplement aide beaucoup. Un bundler sert à rassembler et organiser plusieurs fichiers pour produire un résultat final plus facile à distribuer.
+
+- [ ] **La différence entre `src/` et `dist/`**
+  `src/` correspond en général à ce que tu écris. `dist/` correspond à ce que l’outil prépare pour la version finale. Bien comprendre cette différence clarifie beaucoup de choses.
+
+- [ ] **Le rôle du serveur de développement**
+  Un dev server n’est pas la même chose qu’un build de production. Il sert surtout à travailler rapidement pendant que tu développes.
+
+- [ ] **La minification**
+  C’est le fait de rendre les fichiers plus compacts pour la production. Le code devient moins agréable à lire pour un humain, mais plus léger à envoyer au navigateur.
+
+- [ ] **Le tree-shaking**
+  C’est l’idée de ne garder dans le build final que ce qui est réellement utilisé. Même sans entrer dans le détail, comprendre ce principe aide à voir pourquoi certains outils de build sont utiles.
+
+- [ ] **Les assets**
+  Une application ne contient pas seulement du JavaScript. Il y a aussi des images, du CSS, des polices, des SVG. Comprendre comment un outil gère ces fichiers est une bonne suite logique.
+
+- [ ] **Pourquoi la production demande plus de préparation**
+  En développement, on veut aller vite. En production, on veut quelque chose de propre, stable et léger. Explorer cette différence permet de mieux comprendre le rôle réel des outils.
+
+- [ ] **La configuration de Vite**
+  Pas pour la mémoriser tout de suite, mais pour voir qu’elle sert à décrire quelques choix du projet : plugins, dossier de sortie, comportement du serveur, etc.
+
+---
+
+## 16. Questions de révision
+
+1. Pourquoi utilise-t-on des outils de build en développement web moderne ?
+2. Que veut dire le mot “build” dans ce contexte ?
+3. Quelle différence simple peux-tu faire entre `src/` et `dist/` ?
+4. À quoi sert esbuild, formulé avec des mots simples ?
+5. Pourquoi esbuild est-il surtout connu ?
+6. Pourquoi peut-on dire que esbuild est plutôt une brique qu’un outil complet de développement ?
+7. À quoi sert Vite dans un projet frontend ?
+8. Pourquoi Vite est-il souvent perçu comme agréable à utiliser ?
+9. Quelle différence générale peux-tu faire entre esbuild et Vite ?
+10. Pourquoi dit-on que Vite utilise esbuild ?
+11. Quel est le rôle de Rollup, expliqué simplement ?
+12. Pourquoi Vite ne traite-t-il pas forcément le développement et la production de la même manière ?
+13. Qu’attend-on surtout d’un outil en phase de développement ?
+14. Qu’attend-on surtout d’un outil en phase de production ?
+15. Pourquoi est-il utile de distinguer vitesse de développement et qualité du build final ?
+16. Dans l’analogie de l’atelier, quel rôle joue esbuild ?
+17. Dans l’analogie de l’atelier, quel rôle joue Rollup ?
+18. Dans l’analogie de l’atelier, quel rôle joue Vite ?
+19. Pourquoi un débutant n’a-t-il pas besoin de comprendre immédiatement tous les détails internes de Vite ?
+20. Que veut dire l’idée suivante : “Vite aide le développeur à travailler confortablement” ?
+21. Pourquoi le concept de bundler est-il important à comprendre, même simplement ?
+22. À quoi sert la minification ?
+23. Que cherche à faire le tree-shaking ?
+24. Pourquoi un projet frontend moderne contient-il autre chose que du JavaScript ?
+25. Si tu devais résumer ce log en 5 phrases, que dirais-tu ?
+
+---
+
+## 17. Vocabulaire à retenir
+
+- **Build** : étape où l’on prépare le projet pour sa version finale.
+- **Code source** : fichiers que tu écris pour développer.
+- **Production** : version finale du projet, prête à être mise en ligne.
+- **Bundler** : outil qui rassemble et organise plusieurs fichiers pour produire une sortie finale.
+- **Transpiler** : outil qui transforme un code écrit dans une syntaxe en une autre plus directement exploitable.
+- **esbuild** : outil très rapide qui transforme et peut assembler du code JavaScript ou TypeScript.
+- **Vite** : outil de développement frontend qui rend le travail plus fluide et prépare aussi le build.
+- **Rollup** : outil utilisé pour construire une sortie de production propre et optimisée.
+- **Dev server** : serveur utilisé pendant le développement pour voir rapidement les changements.
+- **Asset** : fichier utilisé par le projet, par exemple une image, une feuille CSS, une police ou un SVG.
+- **Minification** : réduction de la taille des fichiers pour la production.
+- **Tree-shaking** : fait de retirer du build final le code non utilisé.
+- **`src/`** : dossier où l’on place en général le code source.
+- **`dist/`** : dossier qui contient en général la version finale produite par le build.
 
 ---
 
 ## Résumé en une phrase
 
-> **esbuild est le moteur.** C'est ce qui transforme et assemble ton code à une vitesse inédite.
-> **Vite est le véhicule.** Il embarque ce moteur pour le dev, ajoute tout ce dont un développeur a besoin, et utilise Rollup pour les longs trajets en production.
+> **esbuild** sert surtout à transformer le code très vite, **Rollup** sert à bien préparer la version finale, et **Vite** organise tout cela pour rendre le développement plus simple et plus fluide.

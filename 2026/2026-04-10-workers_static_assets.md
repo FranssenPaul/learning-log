@@ -92,16 +92,16 @@ Exemples de rôles possibles :
 - renvoyer du JSON
 - gérer certaines routes d’API
 
-Dans ton projet **Partition**, le Worker peut par exemple :
+Dans un cas plus général, le Worker peut par exemple :
 
-- recevoir `numerator`, `denominator`, `color`
-- calculer le partage du cercle
-- renvoyer un SVG
+- recevoir des paramètres comme `title`, `theme` ou `format`
+- produire dynamiquement une ressource ou une réponse adaptée
+- renvoyer du HTML, du JSON, du texte ou un SVG
 
 Exemple mental :
 
 - `/` → la page front
-- `/fraction.svg?n=3&d=8&color=%23f59e0b` → réponse SVG générée par le Worker
+- `/api/preview?title=Bonjour&theme=light` → réponse générée par le Worker
 
 ---
 
@@ -119,21 +119,21 @@ Il contient par exemple :
 Ce front peut :
 
 - afficher un formulaire
-- laisser l’utilisateur saisir numérateur, dénominateur, couleur
+- laisser l’utilisateur saisir des paramètres
 - appeler le Worker avec `fetch()`
-- afficher le SVG renvoyé
+- afficher la réponse renvoyée
 
-Le front n’est pas obligé de calculer lui-même le cercle.
+Le front n’est pas obligé de produire lui-même le résultat final.
 
 Deux approches sont possibles :
 
 ### Approche A — génération côté front
-Le navigateur calcule et dessine directement le SVG.
+Le navigateur calcule ou construit directement le résultat.
 
 ### Approche B — génération côté Worker
-Le navigateur demande au Worker de générer le SVG.
+Le navigateur demande au Worker de générer la réponse.
 
-Dans ton cas, l’approche B est formatrice parce qu’elle apprend :
+L’approche B est souvent très formatrice parce qu’elle apprend :
 
 - la structure d’une API
 - la validation côté serveur
@@ -176,12 +176,12 @@ On y met généralement :
 - le CSS importé dans le front
 - les composants, si on en utilise
 
-Dans ton projet, `src/` peut contenir :
+Par exemple, `src/` peut contenir :
 
 - `main.ts`
 - `style.css`
-- `lib/fraction.ts`
-- `lib/svg.ts`
+- `lib/api.ts`
+- `lib/render.ts`
 
 ### `public/`
 C’est un dossier spécial pour des fichiers statiques qu’on veut copier tels quels.
@@ -280,10 +280,10 @@ Son intérêt est fort :
 - ton code Worker s’intègre au même projet
 - le runtime local se rapproche du comportement réel de production
 
-C’est donc un bon choix pour un projet comme **Partition**, où tu veux :
+C’est donc un bon choix pour un projet où tu veux :
 
 - une petite interface propre
-- un Worker qui génère ou renvoie le SVG
+- un Worker qui génère ou renvoie une réponse dynamique
 - un déploiement cohérent
 
 ---
@@ -322,12 +322,12 @@ Autrement dit, pour un projet neuf, mieux vaut partir directement sur le modèle
 
 ---
 
-## 14. Structure de projet recommandée pour Partition
+## 14. Structure de projet recommandée
 
 Une structure saine serait par exemple :
 
 ```text
-partition/
+mon-projet/
   index.html
   package.json
   tsconfig.json
@@ -341,9 +341,9 @@ partition/
     main.ts
     style.css
     lib/
-      fraction.ts
-      circle.ts
-      svg.ts
+      api.ts
+      parser.ts
+      render.ts
       types.ts
 
   worker/
@@ -409,13 +409,13 @@ Le combo **Vite + Cloudflare Vite plugin + Worker + Static Assets** est un excel
 
 ---
 
-## 17. Application directe à Partition
+## 17. Application directe à un mini-projet
 
-Dans **Partition**, tu peux viser ceci :
+Dans un mini-projet de ce type, tu peux viser ceci :
 
 - une petite UI avec formulaire
-- un Worker qui reçoit les données de fraction
-- une réponse SVG générée
+- un Worker qui reçoit des paramètres
+- une réponse générée dynamiquement
 - un aperçu dans la page
 - éventuellement une URL partageable
 
@@ -442,6 +442,36 @@ Dans ton stack :
 - **Cloudflare** sert ce build comme assets statiques
 - **le Worker** gère la logique dynamique
 - **Wrangler** configure et déploie l’ensemble
+
+---
+
+## 19. Questions de révision
+
+1. Quelle est la différence entre un asset statique et le code d’un Worker ?
+2. Pourquoi dit-on qu’un fichier comme `index.html` est statique ?
+3. Quel est le rôle principal d’un Worker dans une application Cloudflare ?
+4. Pourquoi Workers Static Assets est-il pratique pour déployer une application web complète ?
+5. Quelle différence faut-il faire entre la partie front et la logique serveur ?
+6. Dans une architecture avec Vite, à quoi sert le dossier `src/` ?
+7. Quel type de fichiers place-t-on plutôt dans `public/` ?
+8. Pourquoi ne faut-il pas considérer `public/` comme le build final ?
+9. Quel est le rôle du dossier `dist/` ?
+10. Pourquoi Cloudflare sert-il généralement `dist/` plutôt que `src/` ?
+11. Que fait Vite en développement ?
+12. Que fait Vite en production ?
+13. Quel est le rôle de Wrangler dans un projet Cloudflare Workers ?
+14. Pourquoi `wrangler.jsonc` est-il important ?
+15. Que signifie le `c` dans `jsonc` ?
+16. Que permet le plugin `@cloudflare/vite-plugin` ?
+17. En quoi l’approche où le navigateur demande au Worker de générer la réponse est-elle pédagogique ?
+18. Donne un exemple de route servie comme asset statique.
+19. Donne un exemple de route qui serait traitée dynamiquement par un Worker.
+20. Pourquoi est-il utile de bien distinguer le code source, le build final et la réponse HTTP ?
+21. Quelle est la différence entre “fichier servi” et “code exécuté” ?
+22. Pourquoi le couple Vite + Worker + Static Assets est-il une bonne base d’apprentissage ?
+23. Si tu modifies un fichier dans `src/`, pourquoi faut-il ensuite reconstruire le projet pour la production ?
+24. Quel est le flux général entre écriture du front, build et déploiement ?
+25. Si tu devais résumer ce document en 5 phrases, quels seraient les points essentiels ?
 
 ---
 
